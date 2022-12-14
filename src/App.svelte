@@ -1,25 +1,103 @@
 <script lang="ts">
-    import { onMount } from 'svelte'
     import IconButton from '@smui/icon-button'
+    import { onMount } from 'svelte'
 
     import Editor from './Editor.svelte'
-    import { Backend, type RunResult } from './rush'
+    import type { RunResult } from './rush'
+    import RushWorker from './rush.worker?worker'
+
     let code = ''
-    $: console.log(code)
 
     let running = false
     let runRes: RunResult = undefined
-    let rush: Backend = new Backend()
+
+    let rushWorker: Worker | null = null
 
     function run() {
         running = true
-        runRes = rush.run(code)
-        running = false
+        rushWorker = makeWorker(code)
     }
 
     function cancel() {
         running = false
+        rushWorker?.terminate()
     }
+
+    function makeWorker(code: string): Worker {
+        let worker = new RushWorker()
+
+        worker.onmessage = function (event: { data: any[] }) {
+            if (event.data[0] === 'ready') worker.postMessage(['run', code])
+            if (event.data[0] === 'finished') {
+                running = false
+                worker.terminate()
+                runRes = JSON.parse(event.data[1])
+            }
+        }
+        return worker
+    }
+
+    let resizer: HTMLDivElement | null = null
+
+    onMount(() => {
+        code = "fn main() {\n\
+    // Write your rush code here\n\
+    let a = 'a';\n\
+    exit(0)\n\
+}"
+
+        // the current position of mouse
+        let x = 0
+        let y = 0
+
+        // width of left side
+        let leftWidth = 0
+
+        const leftSide: Element = resizer.previousElementSibling
+        const rightSide: HTMLElement = resizer.nextElementSibling
+
+        // handle the mousedown event
+        // that's triggered when user drags the resizer
+        const mouseDownHandler = function (e: any) {
+            // Get the current mouse position
+            x = e.clientX
+            y = e.clientY
+            leftWidth = leftSide.getBoundingClientRect().width
+
+            // Attach the listeners to `document`
+            document.addEventListener('mousemove', mouseMoveHandler)
+            document.addEventListener('mouseup', mouseUpHandler)
+        }
+        const mouseMoveHandler = function (e) {
+            // How far the mouse has been moved
+            const dx = e.clientX - x
+            const dy = e.clientY - y
+
+            const newLeftWidth =
+                ((leftWidth + dx) * 100) / resizer.parentNode.getBoundingClientRect().width
+            leftSide.style.width = `${newLeftWidth}%`
+
+            leftSide.style.userSelect = 'none'
+            leftSide.style.pointerEvents = 'none'
+
+            rightSide.style.userSelect = 'none'
+            rightSide.style.pointerEvents = 'none'
+        }
+
+        const mouseUpHandler = function () {
+            leftSide.style.removeProperty('user-select')
+            leftSide.style.removeProperty('pointer-events')
+
+            rightSide.style.removeProperty('user-select')
+            rightSide.style.removeProperty('pointer-events')
+
+            // Remove the handlers of `mousemove` and `mouseup`
+            document.removeEventListener('mousemove', mouseMoveHandler)
+            document.removeEventListener('mouseup', mouseUpHandler)
+        }
+
+        resizer.addEventListener('mousedown', mouseDownHandler)
+    })
 </script>
 
 <main>
@@ -27,6 +105,7 @@
         <div class="main__editor">
             <Editor bind:code />
         </div>
+        <div class="main__resizer" bind:this={resizer} />
         <div class="main__output">
             <div class="main__output__nav">
                 <IconButton class="material-icons" on:click={run} disabled={running}
@@ -70,11 +149,16 @@
         width: 100%;
 
         &__editor {
-            width: 75%;
+            width: calc(75% - 10px);
+        }
+
+        &__resizer {
+            width: 4px;
+            cursor: e-resize;
         }
 
         &__output {
-            width: 25%;
+            flex: 1 1 0%;
             background-color: #222225;
 
             &__nav {

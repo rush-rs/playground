@@ -13,7 +13,7 @@ const highlightBackground = '#2c313a',
     bg_d = '#21252b',
     fg = '#abb2bf',
     purple = '#c678dd',
-    green = '#98c379',
+    //green = '#98c379',
     orange = '#d19a66',
     blue = '#61afef',
     cyan = '#56b6c2',
@@ -106,7 +106,7 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
     { tag: [t.propertyName, t.standard(t.function(t.variableName))], color: cyan },
     { tag: [t.local(t.variableName), t.standard(t.variableName)], color: red },
     { tag: t.comment, color: grey },
-    { tag: t.string, color: green },
+    { tag: t.character, color: orange },
     { tag: [t.bracket, t.separator], color: light_grey },
 ])
 

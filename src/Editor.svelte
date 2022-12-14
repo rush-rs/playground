@@ -1,10 +1,10 @@
 <script lang="ts">
     import { basicSetup, EditorView } from 'codemirror'
-    import { EditorState } from '@codemirror/state'
+    import { Compartment, EditorState } from '@codemirror/state'
     import { indentWithTab } from '@codemirror/commands'
     import { keymap } from '@codemirror/view'
     import { linter, lintGutter, type Diagnostic } from '@codemirror/lint'
-    import { Homescript } from 'codemirror-lang-homescript'
+    import { rush } from './index.js'
     import { createEventDispatcher, onMount } from 'svelte'
     import { oneDark } from './oneDark'
     import { Backend } from './rush'
@@ -27,12 +27,12 @@
     let editorDiv: HTMLDivElement = undefined
     const dispatch = createEventDispatcher()
     let timer: NodeJS.Timeout
-    let rush: Backend = undefined
+    let rushBackend: Backend = undefined
 
     const RushLinter = linter(async () => {
         let diagnostics: Diagnostic[] = []
 
-        let rushDiagnostics = rush.lint(code)
+        let rushDiagnostics = rushBackend.lint(code)
         console.log(rushDiagnostics)
 
         for (let d of rushDiagnostics) {
@@ -51,17 +51,16 @@
     })
 
     onMount(() => {
-        rush = new Backend()
+        rushBackend = new Backend()
 
         let state = EditorState.create({
             extensions: [
                 basicSetup,
                 keymap.of([indentWithTab]),
-                Homescript(),
+                rush(),
                 RushLinter,
                 lintGutter(),
                 oneDark,
-                EditorState.tabSize.of(8),
 
                 // Emit the `update` event 500 ms after the last keystroke
                 EditorView.updateListener.of(v => {
