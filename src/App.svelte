@@ -1,17 +1,35 @@
 <script lang="ts">
     import IconButton from '@smui/icon-button'
+    import Button, { Label } from '@smui/button'
+    import Dialog, { Title, Content, Actions } from '@smui/dialog'
+    import Select, { Option } from '@smui/select'
     import { onMount } from 'svelte'
 
     import Editor from './Editor.svelte'
     import type { RunResult } from './rush'
     import RushWorker from './rush.worker?worker'
 
+    const templates = {
+        Welcome: 'welcome.rush',
+        Blank: 'blank.rush',
+        Fibonacci: 'fib.rush',
+    }
+
     let code = ''
+    $: if (loadedInitially) saveCode(code)
+
+    let loadedInitially = false
+    let currTemplateCode = ''
+    let loadedScript = ''
+    let currentScript = Object.keys(templates)[0]
 
     let running = false
     let runRes: RunResult = undefined
 
     let rushWorker: Worker | null = null
+    let resizer: HTMLDivElement | null = null
+
+    let helpOpen = false
 
     function run() {
         running = true
@@ -37,59 +55,91 @@
         return worker
     }
 
-    let resizer: HTMLDivElement | null = null
+    function saveCode(code: string) {
+        window.localStorage.setItem('rush-playground-code', code)
+    }
 
-    onMount(() => {
-        code = "fn main() {\n\
-    // Write your rush code here\n\
-    let a = 'a';\n\
-    exit(0)\n\
-}"
+    async function loadFromStorage(): Promise<string> {
+        let res = await fetchTemplate()
+        currTemplateCode = res
+        loadedScript = currentScript
+
+        let loaded = window.localStorage.getItem('rush-playground-code')
+        if (loaded === null) {
+            saveCode(code)
+            return code
+        } else {
+            return loaded
+        }
+    }
+
+    async function fetchTemplate(): Promise<string> {
+        let res = await (await fetch(`/public/scripts/${templates[currentScript]}`)).text()
+        return res
+    }
+
+    function loadTemplate() {
+        if (loadedScript === currentScript) {
+            code = currTemplateCode
+        } else {
+            fetchTemplate().then(res => {
+                code = res
+                currTemplateCode = res
+            })
+            loadedScript = currentScript
+        }
+    }
+
+    onMount(async () => {
+        currTemplateCode = await fetchTemplate()
+        code = await loadFromStorage()
+        loadedInitially = true
 
         // the current position of mouse
-        let x = 0
-        let y = 0
+        let mouseX = 0
+        let mouseY = 0
 
-        // width of left side
+        // width of editor
         let leftWidth = 0
 
-        const leftSide: Element = resizer.previousElementSibling
-        const rightSide: HTMLElement = resizer.nextElementSibling
+        const editorDiv: Element = resizer.previousElementSibling
+        const outputDiv: HTMLElement = resizer.nextElementSibling
 
         // handle the mousedown event
         // that's triggered when user drags the resizer
         const mouseDownHandler = function (e: any) {
             // Get the current mouse position
-            x = e.clientX
-            y = e.clientY
-            leftWidth = leftSide.getBoundingClientRect().width
+            mouseX = e.clientX
+            mouseY = e.clientY
+            leftWidth = editorDiv.getBoundingClientRect().width
 
             // Attach the listeners to `document`
             document.addEventListener('mousemove', mouseMoveHandler)
             document.addEventListener('mouseup', mouseUpHandler)
         }
+
         const mouseMoveHandler = function (e) {
             // How far the mouse has been moved
-            const dx = e.clientX - x
-            const dy = e.clientY - y
+            const dx = e.clientX - mouseX
+            const dy = e.clientY - mouseY
 
             const newLeftWidth =
                 ((leftWidth + dx) * 100) / resizer.parentNode.getBoundingClientRect().width
-            leftSide.style.width = `${newLeftWidth}%`
+            editorDiv.style.width = `${newLeftWidth}%`
 
-            leftSide.style.userSelect = 'none'
-            leftSide.style.pointerEvents = 'none'
+            editorDiv.style.userSelect = 'none'
+            editorDiv.style.pointerEvents = 'none'
 
-            rightSide.style.userSelect = 'none'
-            rightSide.style.pointerEvents = 'none'
+            outputDiv.style.userSelect = 'none'
+            outputDiv.style.pointerEvents = 'none'
         }
 
         const mouseUpHandler = function () {
-            leftSide.style.removeProperty('user-select')
-            leftSide.style.removeProperty('pointer-events')
+            editorDiv.style.removeProperty('user-select')
+            editorDiv.style.removeProperty('pointer-events')
 
-            rightSide.style.removeProperty('user-select')
-            rightSide.style.removeProperty('pointer-events')
+            outputDiv.style.removeProperty('user-select')
+            outputDiv.style.removeProperty('pointer-events')
 
             // Remove the handlers of `mousemove` and `mouseup`
             document.removeEventListener('mousemove', mouseMoveHandler)
@@ -101,6 +151,38 @@
 </script>
 
 <main>
+    <Dialog bind:open={helpOpen} aria-labelledby="help-title" aria-describedby="help-content">
+        <Title id="help-title">Using The Playground</Title>
+        <Content id="help-content">
+            <p>
+                The <a class="highlight" href="https://github.com/rush-rs/rush-playground"
+                    >rush Playground</a
+                >
+                allows everyone to use the
+                <a class="highlight" href="https://github.com/rush-rs/rush">rush</a> programming language
+                regardless of whether they have installed rush or not.
+            </p>
+
+            <p>
+                All changes made to the current script are saved locally, meaning on your device.
+                Therefore, you can reload the page while working without hesitation. If you do want
+                to erase your current changes, use the <code class="highlight">load</code> button in
+                the top right corner.
+            </p>
+
+            <p>
+                This button can also be used to switch to other code templates. For this, the
+                desired template is to be selected using the drop down menu. After the selection has
+                been made, the <code class="highlight">load</code> button is to be pressed.
+            </p>
+        </Content>
+        <Actions>
+            <Button on:click={() => (helpOpen = false)}>
+                <Label>Close</Label>
+            </Button>
+        </Actions>
+    </Dialog>
+
     <div class="main">
         <div class="main__editor">
             <Editor bind:code />
@@ -108,12 +190,32 @@
         <div class="main__resizer" bind:this={resizer} />
         <div class="main__output">
             <div class="main__output__nav">
-                <IconButton class="material-icons" on:click={run} disabled={running}
-                    >play_arrow</IconButton
-                >
-                <IconButton class="material-icons" on:click={cancel} disabled={!running}
-                    >cancel</IconButton
-                >
+                <div class="main__output__nav__left">
+                    <IconButton class="material-icons" on:click={run} disabled={running}
+                        >play_arrow</IconButton
+                    >
+                    <IconButton class="material-icons" on:click={cancel} disabled={!running}
+                        >cancel</IconButton
+                    >
+                    <Select bind:value={currentScript} label="Select Template">
+                        {#each Object.keys(templates) as template}
+                            <Option value={template}>{template}</Option>
+                        {/each}
+                    </Select>
+                    <Button
+                        variant="raised"
+                        on:click={loadTemplate}
+                        disabled={(currentScript === loadedScript || running) &&
+                            currTemplateCode === code}><Label>Load</Label></Button
+                    >
+                </div>
+                <div class="main__output__nav__right">
+                    <IconButton
+                        size="button"
+                        class="material-icons"
+                        on:click={() => (helpOpen = true)}>help</IconButton
+                    >
+                </div>
             </div>
             <div class="main__output__terminal">
                 {#if running}
@@ -137,10 +239,16 @@
 </main>
 
 <style lang="scss">
+    @use 'mixins' as *;
+
     :global(body) {
         width: 100%;
         height: 100%;
         margin: 0;
+    }
+
+    .highlight {
+        color: var(--clr-primary);
     }
 
     .main {
@@ -148,30 +256,56 @@
         height: 100vh;
         width: 100%;
 
+        @include mobile {
+            flex-direction: column;
+        }
+
         &__editor {
             width: calc(75% - 10px);
+
+            @include mobile {
+                height: 75%;
+                width: 100%;
+            }
         }
 
         &__resizer {
             width: 4px;
             cursor: e-resize;
+
+            @include mobile {
+                display: none;
+            }
         }
 
         &__output {
             flex: 1 1 0%;
             background-color: #222225;
 
+            @include mobile {
+                height: 25%;
+            }
+
             &__nav {
                 background-color: #323237;
-                height: 4rem;
+                height: 4.5rem;
                 display: flex;
                 align-items: center;
                 padding: 0 1rem;
+                display: flex;
+                justify-content: space-between;
                 gap: 1rem;
+
+                &__left,
+                &__right {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }
             }
 
             &__terminal {
-                font-family: 'Jetbrains Mono', monospace;
+                font-family: 'Jetbrains Mono NL', monospace;
                 padding: 1rem 1.6rem;
             }
         }

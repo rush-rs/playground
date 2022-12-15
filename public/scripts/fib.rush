@@ -1,0 +1,13 @@
+fn main() {
+    // fib(10) = 55
+    exit(fib_rec(10))
+}
+
+fn fib_rec(n: int) -> int {
+    if n < 2 {
+        n
+    } else {
+        fib_rec(n - 2) + fib_rec(n - 1)
+    }
+}
+
