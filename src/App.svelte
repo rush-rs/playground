@@ -9,17 +9,20 @@
     import type { RunResult } from './rush'
     import RushWorker from './rush.worker?worker'
 
+    import welcomeRush from '/public/scripts/welcome.rush?raw'
+    import fibRush from '/public/scripts/fib.rush?raw'
+    import powRush from '/public/scripts/pow.rush?raw'
+
     const templates = {
-        Welcome: 'welcome.rush',
-        Fibonacci: 'fib.rush',
-        Pow: 'pow.rush',
+        Welcome: welcomeRush,
+        Fibonacci: fibRush,
+        Pow: powRush,
     }
 
     let code = ''
     $: if (loadedInitially) saveCode(code)
 
     let loadedInitially = false
-    let currTemplateCode = ''
     let loadedScript = ''
     let currentScript = Object.keys(templates)[0]
 
@@ -65,8 +68,6 @@
     }
 
     async function loadFromStorage(): Promise<string> {
-        let res = await fetchTemplate()
-        currTemplateCode = res
         loadedScript = currentScript
 
         let storageScript = window.localStorage.getItem('rush-playground-script')
@@ -79,6 +80,7 @@
 
         let loaded_code = window.localStorage.getItem('rush-playground-code')
         if (loaded_code === null) {
+            code = templates[currentScript]
             saveCode(code)
             return code
         } else {
@@ -86,27 +88,16 @@
         }
     }
 
-    async function fetchTemplate(): Promise<string> {
-        let res = await (await fetch(`/public/scripts/${templates[currentScript]}`)).text()
-        return res
-    }
-
     function loadTemplate() {
-        if (loadedScript === currentScript) {
-            code = currTemplateCode
-        } else {
+        code = templates[currentScript]
+        if (loadedScript !== currentScript) {
             saveScript(currentScript)
-            fetchTemplate().then(res => {
-                code = res
-                currTemplateCode = res
-            })
             loadedScript = currentScript
         }
     }
 
     onMount(async () => {
         code = await loadFromStorage()
-        currTemplateCode = await fetchTemplate()
         loadedInitially = true
 
         // the current position of mouse
@@ -230,7 +221,7 @@
                         variant="raised"
                         on:click={loadTemplate}
                         disabled={(currentScript === loadedScript || running) &&
-                            currTemplateCode === code}><Label>Load</Label></Button
+                            templates[currentScript] === code}><Label>Load</Label></Button
                     >
                 </div>
                 <div class="main__output__nav__right">
