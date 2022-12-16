@@ -53,12 +53,12 @@ fn main() {
     // Addition
     1 + 2;
     2.0 + 1.0;
-    'a' + 'b'; // 195 > 127: this char addition saturates at 127
+    'a' + 'b';
 
     // Subtraction
     3 - 2;
     1.2 - 0.1;
-    'a' - 'b'; // -1 < 0: this char subtraction saturates at 0
+    'a' - 'b';
 
     // Multiplication
     2 * 3;

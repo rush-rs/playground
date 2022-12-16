@@ -1,6 +1,6 @@
 <script lang="ts">
     import { basicSetup, EditorView } from 'codemirror'
-    import { Compartment, EditorState } from '@codemirror/state'
+    import { EditorState } from '@codemirror/state'
     import { indentWithTab } from '@codemirror/commands'
     import { keymap } from '@codemirror/view'
     import { linter, lintGutter, type Diagnostic } from '@codemirror/lint'
