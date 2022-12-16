@@ -9,9 +9,9 @@
     import type { RunResult } from './rush'
     import RushWorker from './rush.worker?worker'
 
-    import welcomeRush from '/public/scripts/welcome.rush?raw'
-    import fibRush from '/public/scripts/fib.rush?raw'
-    import powRush from '/public/scripts/pow.rush?raw'
+    import welcomeRush from './scripts/welcome.rush?raw'
+    import fibRush from './scripts/fib.rush?raw'
+    import powRush from './scripts/pow.rush?raw'
 
     const templates = {
         Welcome: welcomeRush,
@@ -161,7 +161,7 @@
         <Content id="help-content">
             <p>
                 The <a class="highlight" href="https://github.com/rush-rs/rush-playground"
-                    >rush Playground</a
+                    >rush playground</a
                 >
                 allows everyone to use the
                 <a class="highlight" href="https://github.com/rush-rs/rush">rush</a> programming language
