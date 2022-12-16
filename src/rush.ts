@@ -23,8 +23,12 @@ export interface Location {
 ///// EXECUTION /////
 
 export interface RunResult {
+    // the exit-code of the program
     code: number
+    // whether the VM has crashed during program execution
     runtimeError: RuntimError
+    // specifies the runtime of the VM
+    elapsed: string
 }
 
 export interface RuntimError {

@@ -1,5 +1,7 @@
 mod lint;
 mod run;
+use std::time::Instant;
+
 use lint::WasmDiagnostic;
 use run::{RunResult, WasmRuntimeError};
 use wasm_bindgen::prelude::*;
@@ -21,12 +23,14 @@ pub fn analyze(code: &str) -> String {
 
 #[wasm_bindgen]
 pub fn run(code: &str) -> String {
+    let start = Instant::now();
     let (program, _) = match rush_analyzer::analyze(code, "playground") {
         Ok(res) => res,
         Err(_) => {
             let res = RunResult {
                 code: None,
                 runtime_error: None,
+                elapsed: format!("{:?}", start.elapsed()),
             };
 
             return serde_json::to_string(&res).expect("can always serialize this struct");
@@ -37,10 +41,12 @@ pub fn run(code: &str) -> String {
         Ok(code) => RunResult {
             code: Some(code),
             runtime_error: None,
+            elapsed: format!("{:?}", start.elapsed()),
         },
         Err(err) => RunResult {
             code: None,
             runtime_error: Some(WasmRuntimeError::from(err)),
+            elapsed: format!("{:?}", start.elapsed()),
         },
     };
 

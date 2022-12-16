@@ -6,6 +6,7 @@ use serde::Serialize;
 pub struct RunResult {
      pub code: Option<i64>,
      pub runtime_error: Option<WasmRuntimeError>,
+     pub elapsed: String,
 }
 
 #[derive(Serialize)]

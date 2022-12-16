@@ -33,7 +33,6 @@
         let diagnostics: Diagnostic[] = []
 
         let rushDiagnostics = rushBackend.lint(code)
-        console.log(rushDiagnostics)
 
         for (let d of rushDiagnostics) {
             diagnostics.push(

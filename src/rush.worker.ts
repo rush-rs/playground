@@ -1,4 +1,4 @@
-import init, {run} from "../rush-backend/pkg/rush_backend"
+import init, { run } from '../rush-backend/pkg/rush_backend'
 
 main()
 

@@ -11,8 +11,8 @@
 
     const templates = {
         Welcome: 'welcome.rush',
-        Blank: 'blank.rush',
         Fibonacci: 'fib.rush',
+        Pow: 'pow.rush',
     }
 
     let code = ''
@@ -52,6 +52,7 @@
                 runRes = JSON.parse(event.data[1])
             }
         }
+
         return worker
     }
 
@@ -59,17 +60,29 @@
         window.localStorage.setItem('rush-playground-code', code)
     }
 
+    function saveScript(script: string) {
+        window.localStorage.setItem('rush-playground-script', script)
+    }
+
     async function loadFromStorage(): Promise<string> {
         let res = await fetchTemplate()
         currTemplateCode = res
         loadedScript = currentScript
 
-        let loaded = window.localStorage.getItem('rush-playground-code')
-        if (loaded === null) {
+        let storageScript = window.localStorage.getItem('rush-playground-script')
+        if (storageScript === null) {
+            saveScript(currentScript)
+        } else {
+            loadedScript = storageScript
+            currentScript = storageScript
+        }
+
+        let loaded_code = window.localStorage.getItem('rush-playground-code')
+        if (loaded_code === null) {
             saveCode(code)
             return code
         } else {
-            return loaded
+            return loaded_code
         }
     }
 
@@ -82,6 +95,7 @@
         if (loadedScript === currentScript) {
             code = currTemplateCode
         } else {
+            saveScript(currentScript)
             fetchTemplate().then(res => {
                 code = res
                 currTemplateCode = res
@@ -91,8 +105,8 @@
     }
 
     onMount(async () => {
-        currTemplateCode = await fetchTemplate()
         code = await loadFromStorage()
+        currTemplateCode = await fetchTemplate()
         loadedInitially = true
 
         // the current position of mouse
@@ -175,6 +189,16 @@
                 desired template is to be selected using the drop down menu. After the selection has
                 been made, the <code class="highlight">load</code> button is to be pressed.
             </p>
+
+            <p>
+                To run the current code using the <a
+                    class="highlight"
+                    href="https://github.com/rush-rs/rush/tree/main/crates/rush-interpreter-vm"
+                    >VM</a
+                >, use the <i class="material-icons icon">play_arrow</i> button in the top right
+                corder. If the script does not stop when expected, it can be terminated using the
+                <i class="material-icons icon">cancel</i> button.
+            </p>
         </Content>
         <Actions>
             <Button on:click={() => (helpOpen = false)}>
@@ -249,6 +273,12 @@
 
     .highlight {
         color: var(--clr-primary);
+    }
+
+    .icon {
+        font-size: 1.2rem;
+        color: var(--clr-primary);
+        vertical-align: middle;
     }
 
     .main {
