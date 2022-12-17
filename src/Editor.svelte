@@ -4,7 +4,7 @@
     import { indentWithTab } from '@codemirror/commands'
     import { keymap } from '@codemirror/view'
     import { linter, lintGutter, type Diagnostic } from '@codemirror/lint'
-    import { rush } from './index.js'
+    import { rush } from 'codemirror-lang-rush';
     import { createEventDispatcher, onMount } from 'svelte'
     import { oneDark } from './oneDark'
     import { Backend } from './rush'
