@@ -179,12 +179,19 @@
         <Title id="help-title">Using The Playground</Title>
         <Content id="help-content">
             <p>
-                The <a class="highlight" href="https://github.com/rush-rs/rush-playground"
-                    >rush playground</a
+                The <a
+                    class="highlight"
+                    href="https://github.com/rush-rs/rush-playground"
+                    target="_blank"
+                    rel="noreferrer">rush playground</a
                 >
                 allows everyone to use the
-                <a class="highlight" href="https://github.com/rush-rs/rush">rush</a> programming language
-                regardless of whether they have installed rush or not.
+                <a
+                    class="highlight"
+                    href="https://github.com/rush-rs/rush"
+                    target="_blank"
+                    rel="noreferrer">rush</a
+                > programming language regardless of whether they have installed rush or not.
             </p>
 
             <p>
@@ -204,6 +211,8 @@
                 To run the current code using the <a
                     class="highlight"
                     href="https://github.com/rush-rs/rush/tree/main/crates/rush-interpreter-vm"
+                    target="_blank"
+                    rel="noreferrer"
                     >VM</a
                 >, use the <i class="material-icons icon">play_arrow</i> button in the top right
                 corder. If the script does not stop when expected, it can be terminated using the
