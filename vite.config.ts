@@ -11,8 +11,6 @@ export default defineConfig({
                     if (id.includes('node_modules')) {
                         if (id.includes('@smui') || id.includes('@material')) {
                             return 'vendor_mui'
-                        } else if (id.includes('@lezer') || id.includes('@codemirror')) {
-                            return 'vendor_codemirror'
                         }
                         return 'vendor'
                     }
