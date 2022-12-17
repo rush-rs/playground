@@ -42,6 +42,7 @@
     function cancel() {
         running = false
         rushWorker?.terminate()
+        runRes = undefined
     }
 
     function makeWorker(code: string): Worker {
@@ -102,20 +103,38 @@
 
         // the current position of mouse
         let mouseX = 0
-        let mouseY = 0
 
         // width of editor
         let leftWidth = 0
 
-        const editorDiv: Element = resizer.previousElementSibling
-        const outputDiv: HTMLElement = resizer.nextElementSibling
+        const editorDiv: HTMLElement = resizer.previousElementSibling as HTMLElement
+        const outputDiv: HTMLElement = resizer.nextElementSibling as HTMLElement
+
+        // Keybindings:
+        // CTRL + S => force save the current code
+        // F8 => run current code
+        // F9 => cancel code execution
+        document.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault()
+                saveCode(code)
+            } else if (e.key === 'F8' && !running) {
+                run()
+            } else if (e.key === 'F9' && running) {
+                cancel()
+            } else if (e.key === 'F10') {
+                e.preventDefault()
+                if (!running) {
+                    loadTemplate()
+                }
+            }
+        })
 
         // handle the mousedown event
         // that's triggered when user drags the resizer
-        const mouseDownHandler = function (e: any) {
+        const mouseDownHandler = function (e: MouseEvent) {
             // Get the current mouse position
             mouseX = e.clientX
-            mouseY = e.clientY
             leftWidth = editorDiv.getBoundingClientRect().width
 
             // Attach the listeners to `document`
@@ -123,13 +142,13 @@
             document.addEventListener('mouseup', mouseUpHandler)
         }
 
-        const mouseMoveHandler = function (e) {
+        const mouseMoveHandler = function (e: MouseEvent) {
             // How far the mouse has been moved
             const dx = e.clientX - mouseX
-            const dy = e.clientY - mouseY
 
             const newLeftWidth =
-                ((leftWidth + dx) * 100) / resizer.parentNode.getBoundingClientRect().width
+                ((leftWidth + dx) * 100) /
+                (resizer.parentNode as HTMLElement).getBoundingClientRect().width
             editorDiv.style.width = `${newLeftWidth}%`
 
             editorDiv.style.userSelect = 'none'
@@ -146,7 +165,7 @@
             outputDiv.style.removeProperty('user-select')
             outputDiv.style.removeProperty('pointer-events')
 
-            // Remove the handlers of `mousemove` and `mouseup`
+            // remove the handlers of `mousemove` and `mouseup`
             document.removeEventListener('mousemove', mouseMoveHandler)
             document.removeEventListener('mouseup', mouseUpHandler)
         }
@@ -190,6 +209,19 @@
                 corder. If the script does not stop when expected, it can be terminated using the
                 <i class="material-icons icon">cancel</i> button.
             </p>
+
+            <h4>Keybindings</h4>
+            <ul>
+                <li>
+                    <code class="highlight">CTRL + S</code>: force save the current code
+                </li>
+                <li>
+                    <code class="highlight">F8</code>: run the current code
+                </li>
+                <li>
+                    <code class="highlight">F9</code>: terminate current execution
+                </li>
+            </ul>
         </Content>
         <Actions>
             <Button on:click={() => (helpOpen = false)}>
@@ -270,6 +302,15 @@
         font-size: 1.2rem;
         color: var(--clr-primary);
         vertical-align: middle;
+    }
+
+    h4 {
+        margin: 1rem 0;
+    }
+
+    ul {
+        margin: 0;
+        padding: 0 2rem;
     }
 
     .main {
