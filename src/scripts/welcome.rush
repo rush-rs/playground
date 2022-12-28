@@ -21,11 +21,15 @@ fn main() {
     // All variables in rush have a type in order to make developing rush programs easier and safer.
     // You can declare variables in rush using the `let` keyword.
     // Unlike in some other languages, variables always need an initializer, meaning there cannot be uninitialized variables in rush.
-    let int = 42;       // i64 integers
+    let mut int = 42;   // i64 integers
     let float = 3.1415; // IEEE floating point numbers
     let float2 = 1f;    // Alternative float syntax
     let bool = true;    // `true` and `false`
     let char = 'a';     // Any ASCII character
+    let int_ptr = &int; // Saves the memory address of `int`
+                        // Only the types `()` and `!` cannot be referenced
+
+    *int_ptr += 1;      // when used in assignments, pointers need to be dereferenced
 
     // Explicit type annotations are redundant but can be used like this.
     let some_value: float = 3.1;
@@ -39,7 +43,7 @@ fn main() {
     // As you can see below, types like int and float can be added together, just like you would expect.
     // However, floats, bools ,and chars must be converted to ints before the can be added to another int.
     // Conversions like this are called `casts` and exist to ensure maximum type safety.
-    let one_hundred_fourty_eight = int
+    let one_hundred_fourty_nine = int
         + float as int
         + float2 as int
         + bool as int
@@ -162,7 +166,7 @@ fn main() {
     // The parantheses will than contain the function call arguments in the order they were declared as parameters.
     let added = add(2, 3.0);
 
-    // Expected exit-code: 183
+    // Expected exit-code: 184
     // The `exit` function can be used to terminate a program prematurely.
-    exit(one_hundred_fourty_eight + ten + count + added)
+    exit(one_hundred_fourty_nine + ten + count + added)
 }
