@@ -38,7 +38,7 @@ pub fn run(code: &str) -> String {
         }
     };
 
-    let res = match rush_interpreter_vm::run(program) {
+    let res = match rush_interpreter_vm::run::<1024>(program) {
         Ok(code) => RunResult {
             code: Some(code),
             runtime_error: None,

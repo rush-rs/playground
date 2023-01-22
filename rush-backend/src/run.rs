@@ -28,6 +28,7 @@ impl From<RuntimeError> for WasmRuntimeError {
 pub enum WasmRuntimeErrorKind {
     StackOverflow,
     Arithmetic,
+    OutOfMem,
 }
 
 impl From<RuntimeErrorKind> for WasmRuntimeErrorKind {
@@ -35,6 +36,7 @@ impl From<RuntimeErrorKind> for WasmRuntimeErrorKind {
         match src {
             RuntimeErrorKind::StackOverflow => Self::StackOverflow,
             RuntimeErrorKind::Arithmetic => Self::Arithmetic,
+            RuntimeErrorKind::OutOfMem => Self::OutOfMem,
         }
     }
 }
