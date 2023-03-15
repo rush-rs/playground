@@ -12,11 +12,18 @@
     import welcomeRush from './scripts/welcome.rush?raw'
     import fibRush from './scripts/fib.rush?raw'
     import powRush from './scripts/pow.rush?raw'
+    import approxPiRush from './scripts/approx_pi.rush?raw'
+    import approxERush from './scripts/approx_e.rush?raw'
+    import approxApery from './scripts/approx_apery.rush?raw'
+
 
     const templates = {
         Welcome: welcomeRush,
         Fibonacci: fibRush,
         Pow: powRush,
+        ApproxPi: approxPiRush,
+        ApproxE: approxERush,
+        ApproxApery: approxApery,
     }
 
     let code = ''
