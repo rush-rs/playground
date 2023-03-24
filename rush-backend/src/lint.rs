@@ -1,6 +1,24 @@
 use rush_analyzer::{Diagnostic, DiagnosticLevel, ErrorKind};
 use rush_parser::{Location, Span};
 use serde::Serialize;
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn analyze(code: &str) -> String {
+    console_error_panic_hook::set_once();
+
+    let diagnostics = match rush_analyzer::analyze(code, "playground") {
+        Ok((_, diagnostics)) => diagnostics,
+        Err(diagnostics) => diagnostics,
+    };
+
+    let new_diagnostics = diagnostics
+        .into_iter()
+        .map(WasmDiagnostic::from)
+        .collect::<Vec<WasmDiagnostic>>();
+
+    serde_json::to_string(&new_diagnostics).expect("can always serialize diagnostics")
+}
 
 #[derive(Serialize)]
 pub struct WasmDiagnostic {

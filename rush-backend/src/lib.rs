@@ -1,53 +1,103 @@
 mod lint;
 mod run;
+mod compile;
 
-use lint::WasmDiagnostic;
-use run::{RunResult, WasmRuntimeError};
-use wasm_bindgen::prelude::*;
+use rush_analyzer::{Diagnostic, DiagnosticLevel};
 
-#[wasm_bindgen]
-pub fn analyze(code: &str) -> String {
-    console_error_panic_hook::set_once();
-
-    let diagnostics = match rush_analyzer::analyze(code, "playground") {
-        Ok((_, diagnostics)) => diagnostics,
-        Err(diagnostics) => diagnostics,
-    };
-
-    let new_diagnostics = diagnostics
-        .into_iter()
-        .map(WasmDiagnostic::from)
-        .collect::<Vec<WasmDiagnostic>>();
-
-    serde_json::to_string(&new_diagnostics).expect("can always serialize diagnostics")
+fn print_diagnostics(errs: &[Diagnostic]) -> String {
+    errs.iter()
+        .map(display_err)
+        .collect::<Vec<String>>()
+        .join("<br><br>")
 }
 
-#[wasm_bindgen]
-pub fn run(code: &str) -> String {
-    console_error_panic_hook::set_once();
+fn display_err(err: &Diagnostic) -> String {
+    let code = err.source.to_string().replace([' ', '\t'], "&nbsp;");
+    let lines: Vec<_> = code.split('\n').collect();
 
-    let (program, _) = match rush_analyzer::analyze(code, "playground") {
-        Ok(res) => res,
-        Err(_) => {
-            let res = RunResult {
-                code: None,
-                runtime_error: None,
-            };
+    let (raw_marker, raw_marker_single, color) = match err.level {
+        DiagnosticLevel::Hint => ("~", "^", "#d472fe"), // magenta
+        DiagnosticLevel::Info => ("~", "^", "#45bcf4"), // blue
+        DiagnosticLevel::Warning => ("~", "^", "#ebc656"), // yellow
+        DiagnosticLevel::Error(_) => ("^", "^", "#ff616e"), // red
+    };
 
-            return serde_json::to_string(&res).expect("can always serialize this struct");
+    let notes: String = err
+        .notes
+        .iter()
+        .map(|note| format!("<br><b style='color: #4accd8;'>note: </b>{note}",))
+        .collect();
+
+    // take special action if the source code is empty or there is no useful span
+    if err.source.is_empty() || err.span.is_empty() {
+        return format!(
+            "<b style='{color};'{lvl}</b> in {path} <br> {msg}{notes}",
+            color = color,
+            lvl = err.level,
+            path = err.span.start.path,
+            msg = err.message,
+        );
+    }
+
+    let line1 = match err.span.start.line > 1 {
+        true => format!(
+            "<br>&nbsp;&nbsp;<span style='color: #4f5666;'>{: >3} |</span>{}",
+            err.span.start.line - 1,
+            lines[err.span.start.line - 2],
+        ),
+        false => String::new(),
+    };
+
+    let line2 = format!(
+        "&nbsp;&nbsp;<span style='color: #4f5666;'>{: >3} |</span> {}",
+        err.span.start.line,
+        lines[err.span.start.line - 1]
+    );
+
+    let line3 = match err.span.start.line < lines.len() {
+        true => format!(
+            "<br>&nbsp;&nbsp;<span style='color: #4f5666;'>{: >3} |</span> {}",
+            err.span.start.line + 1,
+            lines[err.span.start.line]
+        ),
+        false => String::new(),
+    };
+
+    let markers = match (
+        err.span.start.line == err.span.end.line,
+        err.span.start.column + 1 == err.span.end.column,
+    ) {
+        // same line, wide column difference
+        (true, false) => raw_marker.repeat(err.span.end.column - err.span.start.column),
+        // same line, just one column difference
+        (true, true) => raw_marker_single.to_string(),
+        // multiline span
+        (_, _) => {
+            format!(
+                "{marker} ...<br>{space}<b style='color: #a0da71;'>+ {line_count} more line{s}</b>",
+                marker = raw_marker
+                    .repeat(lines[err.span.start.line - 1].len() - err.span.start.column + 1),
+                space = "&nbsp;".repeat(err.span.start.column + 7),
+                line_count = err.span.end.line - err.span.start.line,
+                s = match err.span.end.line - err.span.start.line == 1 {
+                    true => "",
+                    false => "s",
+                },
+            )
         }
     };
 
-    let res = match rush_interpreter_vm::run::<1024>(program) {
-        Ok(code) => RunResult {
-            code: Some(code),
-            runtime_error: None,
-        },
-        Err(err) => RunResult {
-            code: None,
-            runtime_error: Some(WasmRuntimeError::from(err)),
-        },
-    };
+    let marker = format!(
+        "{space}<b style='color: {color};'>{markers}</b>",
+        space = "&nbsp;".repeat(err.span.start.column + 6),
+    );
 
-    serde_json::to_string(&res).expect("can always serialize this struct")
+    format!(
+            "<b style='color: {color};'>{lvl}</b> at {path}:{line}:{col}<br>{line1}<br>{line2}<br>{marker}{line3}<br><br> <b style='color: {color};'>{msg}</b>{notes}",
+            lvl = err.level,
+            path = err.span.start.path,
+            line = err.span.start.line,
+            col = err.span.start.column,
+            msg = err.message,
+        )
 }

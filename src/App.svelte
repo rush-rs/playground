@@ -6,7 +6,7 @@
     import { onMount } from 'svelte'
 
     import Editor from './Editor.svelte'
-    import type { RunResult } from './rush'
+    import type { CompileResult, RunResult } from './rush'
     import RushWorker from './rush.worker?worker'
 
     import welcomeRush from './scripts/welcome.rush?raw'
@@ -16,7 +16,6 @@
     import approxERush from './scripts/approx_e.rush?raw'
     import approxApery from './scripts/approx_apery.rush?raw'
 
-
     const templates = {
         Welcome: welcomeRush,
         Fibonacci: fibRush,
@@ -25,6 +24,19 @@
         ApproxE: approxERush,
         ApproxApery: approxApery,
     }
+
+    const backends = {
+        vmInterpreter: 'VM interpreter',
+        tree: 'tree interpreter',
+        vmCompiler: 'VM compiler',
+        wasm: 'WASM',
+        riscv: 'RISC-V',
+        x64: 'x86_64',
+    }
+
+    let currentBackend = Object.keys(backends)[0]
+
+    let compileRes: CompileResult = undefined
 
     let code = ''
     $: if (loadedInitially) saveCode(code)
@@ -43,7 +55,18 @@
 
     function run() {
         running = true
-        rushWorker = makeWorker(code)
+        rushWorker = makeWorker(
+            code,
+            currentBackend,
+            !['vmInterpreter', 'tree'].includes(currentBackend),
+        )
+    }
+
+    function update() {
+        running = true
+        if (!loadedInitially) return
+        running = false
+        if (!['vmInterpreter', 'tree'].includes(currentBackend)) run()
     }
 
     function cancel() {
@@ -52,15 +75,24 @@
         runRes = undefined
     }
 
-    function makeWorker(code: string): Worker {
+    function makeWorker(code: string, backend: string, compile: boolean): Worker {
         let worker = new RushWorker()
 
         worker.onmessage = function (event: { data: any[] }) {
-            if (event.data[0] === 'ready') worker.postMessage(['run', code])
+            if (event.data[0] === 'ready') {
+                if (compile) worker.postMessage(['compile', code, backend])
+                else worker.postMessage(['run', code, backend])
+            }
             if (event.data[0] === 'finished') {
                 running = false
                 worker.terminate()
-                runRes = JSON.parse(event.data[1])
+                if (compile) {
+                    runRes = undefined
+                    compileRes = JSON.parse(event.data[1])
+                } else {
+                    compileRes = undefined
+                    runRes = JSON.parse(event.data[1])
+                }
             }
         }
 
@@ -69,6 +101,10 @@
 
     function saveCode(code: string) {
         window.localStorage.setItem('rush-playground-code', code)
+    }
+
+    function saveBackend(backend: string) {
+        window.localStorage.setItem('rush-playground-backend', backend)
     }
 
     function saveScript(script: string) {
@@ -84,6 +120,13 @@
         } else {
             loadedScript = storageScript
             currentScript = storageScript
+        }
+
+        let storageBackend = window.localStorage.getItem('rush-playground-backend')
+        if (storageBackend === null) {
+            saveBackend(currentBackend)
+        } else {
+            currentBackend = storageBackend
         }
 
         let loaded_code = window.localStorage.getItem('rush-playground-code')
@@ -219,8 +262,7 @@
                     class="highlight"
                     href="https://github.com/rush-rs/rush/tree/main/crates/rush-interpreter-vm"
                     target="_blank"
-                    rel="noreferrer"
-                    >VM</a
+                    rel="noreferrer">VM</a
                 >, use the <i class="material-icons icon">play_arrow</i> button in the top right
                 corder. If the script does not stop when expected, it can be terminated using the
                 <i class="material-icons icon">cancel</i> button.
@@ -248,18 +290,12 @@
 
     <div class="main">
         <div class="main__editor">
-            <Editor bind:code />
+            <Editor bind:code on:update={update} />
         </div>
         <div class="main__resizer" bind:this={resizer} />
         <div class="main__output">
             <div class="main__output__nav">
-                <div class="main__output__nav__left">
-                    <IconButton class="material-icons" on:click={run} disabled={running}
-                        >play_arrow</IconButton
-                    >
-                    <IconButton class="material-icons" on:click={cancel} disabled={!running}
-                        >cancel</IconButton
-                    >
+                <div class="main__output__nav__top">
                     <Select bind:value={currentScript} label="Select Template">
                         {#each Object.keys(templates) as template}
                             <Option value={template}>{template}</Option>
@@ -271,27 +307,67 @@
                         disabled={(currentScript === loadedScript || running) &&
                             templates[currentScript] === code}><Label>Load</Label></Button
                     >
-                </div>
-                <div class="main__output__nav__right">
                     <IconButton
                         size="button"
                         class="material-icons"
                         on:click={() => (helpOpen = true)}>help</IconButton
                     >
                 </div>
+                <div class="main__output__nav__bottom">
+                    <Select
+                        on:SMUISelect:change={() => { update(); saveBackend(currentBackend)}}
+                        bind:value={currentBackend}
+                        label="Select Backend"
+                    >
+                        {#each Object.keys(backends) as backend}
+                            <Option value={backend}>{backends[backend]}</Option>
+                        {/each}
+                    </Select>
+                    {#if ['vmInterpreter', 'tree'].includes(currentBackend)}
+                        <IconButton class="material-icons" on:click={run} disabled={running}
+                            >play_arrow</IconButton
+                        >
+                        <IconButton class="material-icons" on:click={cancel} disabled={!running}
+                            >cancel</IconButton
+                        >
+                    {/if}
+                </div>
             </div>
             <div class="main__output__terminal">
                 {#if running}
-                    VM is running...
+                    Backend is running...
                 {:else if runRes}
                     {#if runRes.runtimeError}
-                        VM crashed:
+                        Interpreter crashed:
                         <br />
                         {runRes.runtimeError.kind}: {runRes.runtimeError.message}
                     {:else if runRes.code !== null}
+                        {#if runRes.diagnostics !== ''}
+                            {@html runRes.diagnostics}
+                            <br />
+                            <br />
+                        {/if}
+
                         Program stopped with code {runRes.code}
                     {:else}
-                        Compilation failed
+                        Compilation failed:
+                        <br />
+                        {@html runRes.diagnostics}
+                    {/if}
+                {:else if compileRes}
+                    {#if compileRes.diagnostics}
+                        {@html compileRes.diagnostics}
+                        <br />
+                        <br />
+                        <br />
+                    {/if}
+                    {#if compileRes.error}
+                        Compilation failed:
+                        {@html compileRes.error}
+                        <br />
+                    {/if}
+                    {#if compileRes.output !== undefined}
+                        {@html compileRes.output}
                     {/if}
                 {:else}
                     Press the play button in order to start program execution
@@ -308,6 +384,7 @@
         width: 100%;
         height: 100%;
         margin: 0;
+        overflow: hidden;
     }
 
     .highlight {
@@ -357,8 +434,14 @@
         }
 
         &__output {
-            flex: 1 1 0%;
+            @include widescreen {
+                width: 27vw;
+            }
+
+            flex: 1 0 0%;
             background-color: #222225;
+            display:  flex;
+            flex-direction: column;
 
             @include mobile {
                 height: 25%;
@@ -366,16 +449,14 @@
 
             &__nav {
                 background-color: #323237;
-                height: 4.5rem;
+                padding: 0.5rem 1rem;
                 display: flex;
-                align-items: center;
-                padding: 0 1rem;
-                display: flex;
-                justify-content: space-between;
+                flex-direction: column;
                 gap: 1rem;
+                height: 8rem;
 
-                &__left,
-                &__right {
+                &__top,
+                &__bottom {
                     display: flex;
                     align-items: center;
                     gap: 1rem;
@@ -385,6 +466,7 @@
             &__terminal {
                 font-family: 'Jetbrains Mono NL', monospace;
                 padding: 1rem 1.6rem;
+                overflow: auto;
             }
         }
     }

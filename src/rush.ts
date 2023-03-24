@@ -26,12 +26,23 @@ export interface RunResult {
     // the exit-code of the program
     code: number
     // whether the VM has crashed during program execution
-    runtimeError: RuntimError
-    // specifies the runtime of the VM
-    elapsed: string
+    runtimeError: RuntimeError
+    // HTML representation of any diagnostcs
+    diagnostics: string
 }
 
-export interface RuntimError {
+export interface CompileResult {
+    // specifies whether the compilation failed
+    failed: boolean
+    // HTML representation of any diagnostcs
+    diagnostics: string
+    // contains the output code
+    output: string
+    // other error
+    error: string,
+}
+
+export interface RuntimeError {
     kind: 'stackOverflow' | 'arithmetic'
     message: string
 }
@@ -46,8 +57,8 @@ export class Backend {
         return JSON.parse(raw_res)
     }
 
-    run(code: string): RunResult {
-        let raw_res = run(code)
+    run(code: string, backend: string): RunResult {
+        let raw_res = run(code, backend)
         return JSON.parse(raw_res)
     }
 }
