@@ -32,6 +32,7 @@
         wasm: 'WASM',
         riscv: 'RISC-V',
         x64: 'x86_64',
+        transpiler: 'C transpiler',
     }
 
     let currentBackend = Object.keys(backends)[0]

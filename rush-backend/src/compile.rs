@@ -19,6 +19,7 @@ pub enum Backend {
     Wasm,
     Riscv,
     X64,
+    CTranspiler,
 }
 
 impl From<String> for Backend {
@@ -29,6 +30,7 @@ impl From<String> for Backend {
             "wasm" => Self::Wasm,
             "riscv" => Self::Riscv,
             "x64" => Self::X64,
+            "transpiler" => Self::CTranspiler,
             other => panic!("Cannot convert invalid string `{}` to backend", other),
         }
     }
@@ -78,6 +80,9 @@ pub fn compile(code: &str, backend: String) -> String {
         Backend::Riscv => rush_compiler_risc_v::Compiler::new()
             .compile(program, &CommentConfig::Emit { line_width: 19 }),
         Backend::X64 => rush_compiler_x86_64::Compiler::new().compile(program),
+        Backend::CTranspiler => rush_transpiler_c::Transpiler::new(true)
+            .transpile(program)
+            .to_string(),
     }
     .replace(' ', "&nbsp;")
     .replace('\n', "<br>");
