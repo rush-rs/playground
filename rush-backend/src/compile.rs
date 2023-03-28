@@ -166,7 +166,7 @@ impl LanguageProvider for StaticLangProvider {
             }),
             "c" => Ok(Language {
                 inner: tree_sitter_c::language(),
-                highlights_query: include_str!("../highlights.scm").to_owned(),
+                highlights_query: include_str!("./c_highlights.scm").to_owned(),
                 injection_query: String::new(),
                 locals_query: String::new(),
             }),
