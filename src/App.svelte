@@ -29,7 +29,7 @@
         vmInterpreter: 'VM interpreter',
         tree: 'tree interpreter',
         vmCompiler: 'VM compiler',
-        wasm: 'WASM',
+        //wasm: 'Wasm', // TODO: implement wasm
         riscv: 'RISC-V',
         x64: 'x86_64',
         transpiler: 'C transpiler',
