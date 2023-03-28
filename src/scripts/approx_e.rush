@@ -1,3 +1,5 @@
+// This script approximates some digits of E.
+// The final output is an integer which approximates to E * 1000000000000000
 fn main() {
   let mut e = 1f;
   let mut f = 1f;

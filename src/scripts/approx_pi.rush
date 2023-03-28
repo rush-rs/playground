@@ -1,3 +1,5 @@
+// This script approximates some digits of Pi.
+// The final output is an integer which approximates to PI * 1000000
 let ITERATIONS = 4000000;
 
 fn main() {

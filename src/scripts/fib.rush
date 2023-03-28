@@ -1,3 +1,4 @@
+// Calculates a digit of the Fibonacci sequence.
 fn main() {
     // fib(10) = 55
     exit(fib_rec(10))

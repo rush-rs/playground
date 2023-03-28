@@ -17,12 +17,12 @@
     import approxApery from './scripts/approx_apery.rush?raw'
 
     const templates = {
-        Welcome: welcomeRush,
-        Fibonacci: fibRush,
-        Pow: powRush,
-        ApproxPi: approxPiRush,
-        ApproxE: approxERush,
-        ApproxApery: approxApery,
+        Welcome: [welcomeRush, 'Welcome'],
+        Fibonacci: [fibRush, 'Fibonacci'],
+        Pow: [powRush, 'Calculate Powers'],
+        ApproxPi: [approxPiRush, 'Approximate Pi'],
+        ApproxE: [approxERush, 'Approximate E'],
+        ApproxApery: [approxApery, 'Approximate Apéry'],
     }
 
     const backends = {
@@ -44,7 +44,7 @@
 
     let loadedInitially = false
     let loadedScript = ''
-    let currentScript = Object.keys(templates)[0]
+    let currentScript = Object.keys(templates)[0][0]
 
     let running = false
     let runRes: RunResult = undefined
@@ -132,7 +132,7 @@
 
         let loaded_code = window.localStorage.getItem('rush-playground-code')
         if (loaded_code === null) {
-            code = templates[currentScript]
+            code = templates[currentScript][0]
             saveCode(code)
             return code
         } else {
@@ -141,7 +141,7 @@
     }
 
     function loadTemplate() {
-        code = templates[currentScript]
+        code = templates[currentScript][0]
         if (loadedScript !== currentScript) {
             saveScript(currentScript)
             loadedScript = currentScript
@@ -299,14 +299,14 @@
                 <div class="main__output__nav__top">
                     <Select bind:value={currentScript} label="Select Template">
                         {#each Object.keys(templates) as template}
-                            <Option value={template}>{template}</Option>
+                            <Option value={template}>{templates[template][1]}</Option>
                         {/each}
                     </Select>
                     <Button
                         variant="raised"
                         on:click={loadTemplate}
                         disabled={(currentScript === loadedScript || running) &&
-                            templates[currentScript] === code}><Label>Load</Label></Button
+                            templates[currentScript][0] === code}><Label>Load</Label></Button
                     >
                     <IconButton
                         size="button"
@@ -316,7 +316,10 @@
                 </div>
                 <div class="main__output__nav__bottom">
                     <Select
-                        on:SMUISelect:change={() => { update(); saveBackend(currentBackend)}}
+                        on:SMUISelect:change={() => {
+                            update()
+                            saveBackend(currentBackend)
+                        }}
                         bind:value={currentBackend}
                         label="Select Backend"
                     >
@@ -441,7 +444,7 @@
 
             flex: 1 0 0%;
             background-color: #222225;
-            display:  flex;
+            display: flex;
             flex-direction: column;
 
             @include mobile {
