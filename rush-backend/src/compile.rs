@@ -1,4 +1,17 @@
-use crate::{print_diagnostics, run::RunResult};
+use std::collections::BTreeMap;
+
+use crate::{print_diagnostics, run::RunResult, theme};
+use lirstings::{
+    cache::DummyCache,
+    language_provider::{
+        anyhow::{anyhow, Result},
+        Language, LanguageProvider,
+    },
+    log::DummyLogger,
+    renderer::HtmlRenderer,
+    theme::Theme,
+    HighlightConfig, Mode,
+};
 use rush_compiler_risc_v::CommentConfig;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -55,7 +68,10 @@ pub fn compile(code: &str, backend: String) -> String {
 
     let output = match backend.into() {
         Backend::VmInterpreter => panic!("Cannot compile using the VM interpreter"),
-        Backend::VmCompiler => rush_interpreter_vm::compile(program).to_string(),
+        Backend::VmCompiler => highlight(
+            rush_interpreter_vm::compile(program).to_string(),
+            "s".to_string(),
+        ),
         Backend::Wasm => {
             let res = std::panic::catch_unwind(|| {
                 let binary = rush_compiler_wasm::Compiler::new().compile(program);
@@ -63,7 +79,13 @@ pub fn compile(code: &str, backend: String) -> String {
             });
 
             match res {
-                Ok(output) => output,
+                Ok(output) => output
+                    .replace('&', "&amp;")
+                    .replace('<', "&lt;")
+                    .replace('>', "&gt;")
+                    .replace(' ', "&nbsp;<wbr>")
+                    .replace('\n', "<br>")
+                    .replace('\t', "&nbsp;&nbsp;&nbsp;&nbsp;<wbr>"),
                 Err(_) => {
                     return serde_json::to_string(&CompileRes {
                         failure: true,
@@ -77,15 +99,22 @@ pub fn compile(code: &str, backend: String) -> String {
                 }
             }
         }
-        Backend::Riscv => rush_compiler_risc_v::Compiler::new()
-            .compile(program, &CommentConfig::Emit { line_width: 19 }),
-        Backend::X64 => rush_compiler_x86_64::Compiler::new().compile(program),
-        Backend::CTranspiler => rush_transpiler_c::Transpiler::new(true)
-            .transpile(program)
-            .to_string(),
-    }
-    .replace(' ', "&nbsp;")
-    .replace('\n', "<br>");
+        Backend::Riscv => highlight(
+            rush_compiler_risc_v::Compiler::new()
+                .compile(program, &CommentConfig::Emit { line_width: 19 }),
+            "s".to_string(),
+        ),
+        Backend::X64 => highlight(
+            rush_compiler_x86_64::Compiler::new().compile(program),
+            "s".to_string(),
+        ),
+        Backend::CTranspiler => highlight(
+            rush_transpiler_c::Transpiler::new(true)
+                .transpile(program)
+                .to_string(),
+            "c".to_string(),
+        ),
+    };
 
     serde_json::to_string(&CompileRes {
         failure: false,
@@ -98,4 +127,50 @@ pub fn compile(code: &str, backend: String) -> String {
         error: None,
     })
     .expect("can always serialize this struct")
+}
+
+fn highlight(code: String, file_extension: String) -> String {
+    lirstings::highlight::<HtmlRenderer, DummyCache, _, _, _>(
+        code,
+        HighlightConfig {
+            mode: Mode::TreeSitter {
+                raw: false,
+                raw_queries: false,
+                ranges: vec![],
+                label: None,
+                file_extension,
+            },
+            theme: Theme {
+                highlights: theme::theme(),
+                ansi_colors: vec![],
+                comment_map: BTreeMap::new(),
+            },
+            fancyvrb_args: "",
+            logger: &mut DummyLogger,
+            provider: StaticLangProvider,
+            additional_hash_value: (),
+        },
+    )
+    .unwrap()
+}
+
+struct StaticLangProvider;
+impl LanguageProvider for StaticLangProvider {
+    fn provide(self, file_extension: &str) -> Result<Language> {
+        match file_extension {
+            "s" | "asm" => Ok(Language {
+                inner: tree_sitter_asm::language(),
+                highlights_query: tree_sitter_asm::HIGHLIGHTS_QUERY.to_owned(),
+                injection_query: String::new(),
+                locals_query: String::new(),
+            }),
+            "c" => Ok(Language {
+                inner: tree_sitter_c::language(),
+                highlights_query: include_str!("../highlights.scm").to_owned(),
+                injection_query: String::new(),
+                locals_query: String::new(),
+            }),
+            ext => Err(anyhow!("unsupported file extension '{ext}'")),
+        }
+    }
 }

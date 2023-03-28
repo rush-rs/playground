@@ -10,6 +10,11 @@ crate-type = ["cdylib"]
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
+serde = { version = "1.0.158", features = ["derive"] }
+serde_json = "1.0.94"
+wasm-bindgen = "0.2"
+wasmprinter = "0.2.54"
+
 rush-analyzer = { git = "https://github.com/rush-rs/rush" }
 rush-compiler-risc-v = { git = "https://github.com/rush-rs/rush" }
 rush-compiler-wasm = { git = "https://github.com/rush-rs/rush" }
@@ -18,7 +23,10 @@ rush-interpreter-vm = { git = "https://github.com/rush-rs/rush" }
 rush-interpreter-tree = { git = "https://github.com/rush-rs/rush" }
 rush-transpiler-c = { git = "https://github.com/rush-rs/rush" }
 rush-parser = { git = "https://github.com/rush-rs/rush" }
-serde = { version = "1.0.158", features = ["derive"] }
-serde_json = "1.0.94"
-wasm-bindgen = "0.2"
-wasmprinter = "0.2.54"
+
+lirstings = { git = "https://github.com/rush-rs/lirstings", branch = "generalize" }
+tree-sitter-asm = { version = "0.1.0", default-features = false, features = ["tree-sitter-c2rust"] }
+tree-sitter-c = { git = "https://github.com/rush-rs/tree-sitter-c", default-features = false, features = ["tree-sitter-c2rust"] }
+
+[patch.crates-io]
+tree-sitter-c2rust = { git = "https://github.com/shadaj/tree-sitter-c2rust" }
