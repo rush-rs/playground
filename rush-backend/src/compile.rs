@@ -79,13 +79,7 @@ pub fn compile(code: &str, backend: String) -> String {
             });
 
             match res {
-                Ok(output) => output
-                    .replace('&', "&amp;")
-                    .replace('<', "&lt;")
-                    .replace('>', "&gt;")
-                    .replace(' ', "&nbsp;<wbr>")
-                    .replace('\n', "<br>")
-                    .replace('\t', "&nbsp;&nbsp;&nbsp;&nbsp;<wbr>"),
+                Ok(output) => highlight(output, "wat".to_string()),
                 Err(_) => {
                     return serde_json::to_string(&CompileRes {
                         failure: true,
@@ -167,6 +161,12 @@ impl LanguageProvider for StaticLangProvider {
             "c" => Ok(Language {
                 inner: tree_sitter_c::language(),
                 highlights_query: include_str!("./c_highlights.scm").to_owned(),
+                injection_query: String::new(),
+                locals_query: String::new(),
+            }),
+            "wat" => Ok(Language {
+                inner: tree_sitter_wat::language(),
+                highlights_query: tree_sitter_wat::HIGHLIGHTS_QUERY.to_owned(),
                 injection_query: String::new(),
                 locals_query: String::new(),
             }),

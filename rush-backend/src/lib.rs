@@ -1,6 +1,6 @@
+pub mod compile;
 pub mod lint;
 pub mod run;
-pub mod compile;
 pub mod theme;
 
 use rush_analyzer::{Diagnostic, DiagnosticLevel};

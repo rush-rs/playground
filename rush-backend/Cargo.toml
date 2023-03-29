@@ -27,6 +27,7 @@ rush-parser = { git = "https://github.com/rush-rs/rush" }
 lirstings = { git = "https://github.com/rush-rs/lirstings", branch = "generalize" }
 tree-sitter-asm = { version = "0.1.0", default-features = false, features = ["tree-sitter-c2rust"] }
 tree-sitter-c = { git = "https://github.com/rush-rs/tree-sitter-c", default-features = false, features = ["tree-sitter-c2rust"] }
+tree-sitter-wat = { git = "https://github.com/rush-rs/tree-sitter-wasm", default-features = false, features = ["tree-sitter-c2rust"] }
 
 [patch.crates-io]
 tree-sitter-c2rust = { git = "https://github.com/shadaj/tree-sitter-c2rust" }
