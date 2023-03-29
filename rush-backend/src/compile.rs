@@ -72,27 +72,21 @@ pub fn compile(code: &str, backend: String) -> String {
             rush_interpreter_vm::compile(program).to_string(),
             "s".to_string(),
         ),
-        Backend::Wasm => {
-            let res = std::panic::catch_unwind(|| {
-                let binary = rush_compiler_wasm::Compiler::new().compile(program);
-                wasmprinter::print_bytes(binary).expect("Wasm is alwasy valid")
-            });
-
-            match res {
-                Ok(output) => highlight(output, "wat".to_string()),
-                Err(_) => {
-                    return serde_json::to_string(&CompileRes {
-                        failure: true,
-                        diagnostics: None,
-                        output: None,
-                        error: Some(
-                            "Compilation of pointers is not supported for WASM".to_string(),
-                        ),
-                    })
-                    .expect("can always serialize this struct")
-                }
+        Backend::Wasm => match rush_compiler_wasm::Compiler::new().compile(program) {
+            Ok(binary) => {
+                let wat = wasmprinter::print_bytes(binary).expect("Wasm is alwasy valid");
+                highlight(wat, "wat".to_string())
             }
-        }
+            Err(err) => {
+                return serde_json::to_string(&CompileRes {
+                    failure: true,
+                    diagnostics: None,
+                    output: None,
+                    error: Some(err),
+                })
+                .expect("can always serialize this struct")
+            }
+        },
         Backend::Riscv => highlight(
             rush_compiler_risc_v::Compiler::new()
                 .compile(program, &CommentConfig::Emit { line_width: 19 }),

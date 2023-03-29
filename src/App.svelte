@@ -29,7 +29,7 @@
         vmInterpreter: 'VM interpreter',
         tree: 'tree interpreter',
         vmCompiler: 'VM compiler',
-        //wasm: 'Wasm', // TODO: implement wasm
+        wasm: 'Wasm',
         riscv: 'RISC-V',
         x64: 'x86_64',
         transpiler: 'C transpiler',
@@ -367,10 +367,10 @@
                     {/if}
                     {#if compileRes.error}
                         Compilation failed:
+                        <br />
                         {@html compileRes.error}
                         <br />
-                    {/if}
-                    {#if compileRes.output !== undefined}
+                    {:else if compileRes.output !== undefined}
                         {@html compileRes.output}
                     {/if}
                 {:else}
