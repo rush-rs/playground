@@ -9,9 +9,10 @@ use lirstings::{
     },
     log::DummyLogger,
     renderer::HtmlRenderer,
-    theme::Theme,
+    theme::{Theme, ThemeValue},
     HighlightConfig, Mode,
 };
+use pretty_hex::HexConfig;
 use rush_compiler_risc_v::CommentConfig;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -25,11 +26,11 @@ pub struct CompileRes {
     pub error: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, PartialEq, Eq)]
 pub enum Backend {
-    VmInterpreter,
-    VmCompiler,
-    Wasm,
+    Vm,
+    WasmText,
+    WasmBinary,
     Riscv,
     X64,
     CTranspiler,
@@ -38,9 +39,9 @@ pub enum Backend {
 impl From<String> for Backend {
     fn from(value: String) -> Self {
         match value.as_str() {
-            "vmInterpreter" => Self::VmInterpreter,
-            "vmCompiler" => Self::VmCompiler,
-            "wasm" => Self::Wasm,
+            "vmCompiler" => Self::Vm,
+            "wasmText" => Self::WasmText,
+            "wasmBinary" => Self::WasmBinary,
             "riscv" => Self::Riscv,
             "x64" => Self::X64,
             "transpiler" => Self::CTranspiler,
@@ -66,41 +67,69 @@ pub fn compile(code: &str, backend: String) -> String {
         }
     };
 
-    let output = match backend.into() {
-        Backend::VmInterpreter => panic!("Cannot compile using the VM interpreter"),
-        Backend::VmCompiler => highlight(
+    let backend = backend.into();
+    let output = match backend {
+        Backend::Vm => highlight(
             rush_interpreter_vm::compile(program).to_string(),
             "s".to_string(),
+            [],
         ),
-        Backend::Wasm => match rush_compiler_wasm::Compiler::new().compile(program) {
-            Ok(binary) => {
-                let wat = wasmprinter::print_bytes(binary).expect("Wasm is alwasy valid");
-                highlight(wat, "wat".to_string())
+        Backend::WasmText | Backend::WasmBinary => {
+            match rush_compiler_wasm::Compiler::new().compile(program) {
+                Ok(binary) => {
+                    if backend == Backend::WasmText {
+                        let wat = wasmprinter::print_bytes(binary).expect("Wasm is always valid");
+                        highlight(wat, "wat".to_string(), [])
+                    } else {
+                        let dump = pretty_hex::config_hex(
+                            &binary,
+                            HexConfig {
+                                title: false,
+                                ascii: true,
+                                width: 16,
+                                group: 4,
+                                chunk: 2,
+                                max_bytes: usize::MAX,
+                            },
+                        );
+                        highlight(
+                            dump,
+                            "hex".to_string(),
+                            [(
+                                "comment".to_string(),
+                                ThemeValue::Color("$string".to_string()),
+                            )],
+                        )
+                    }
+                }
+                Err(err) => {
+                    return serde_json::to_string(&CompileRes {
+                        failure: true,
+                        diagnostics: None,
+                        output: None,
+                        error: Some(err),
+                    })
+                    .expect("can always serialize this struct")
+                }
             }
-            Err(err) => {
-                return serde_json::to_string(&CompileRes {
-                    failure: true,
-                    diagnostics: None,
-                    output: None,
-                    error: Some(err),
-                })
-                .expect("can always serialize this struct")
-            }
-        },
+        }
         Backend::Riscv => highlight(
             rush_compiler_risc_v::Compiler::new()
                 .compile(program, &CommentConfig::Emit { line_width: 19 }),
             "s".to_string(),
+            [],
         ),
         Backend::X64 => highlight(
             rush_compiler_x86_64::Compiler::new().compile(program),
             "s".to_string(),
+            [],
         ),
         Backend::CTranspiler => highlight(
             rush_transpiler_c::Transpiler::new(true)
                 .transpile(program)
                 .to_string(),
             "c".to_string(),
+            [],
         ),
     };
 
@@ -117,7 +146,15 @@ pub fn compile(code: &str, backend: String) -> String {
     .expect("can always serialize this struct")
 }
 
-fn highlight(code: String, file_extension: String) -> String {
+fn highlight(
+    code: String,
+    file_extension: String,
+    theme_overrides: impl IntoIterator<Item = (String, ThemeValue)>,
+) -> String {
+    let mut highlights = theme::theme();
+    for (key, value) in theme_overrides {
+        highlights.insert(key, value);
+    }
     lirstings::highlight::<HtmlRenderer, DummyCache, _, _, _>(
         code,
         HighlightConfig {
@@ -129,7 +166,7 @@ fn highlight(code: String, file_extension: String) -> String {
                 file_extension,
             },
             theme: Theme {
-                highlights: theme::theme(),
+                highlights,
                 ansi_colors: vec![],
                 comment_map: BTreeMap::new(),
             },
@@ -161,6 +198,12 @@ impl LanguageProvider for StaticLangProvider {
             "wat" => Ok(Language {
                 inner: tree_sitter_wat::language(),
                 highlights_query: tree_sitter_wat::HIGHLIGHTS_QUERY.to_owned(),
+                injection_query: String::new(),
+                locals_query: String::new(),
+            }),
+            "hex" | "hexdump" => Ok(Language {
+                inner: tree_sitter_hexdump::language(),
+                highlights_query: tree_sitter_hexdump::HIGHLIGHTS_QUERY.to_owned(),
                 injection_query: String::new(),
                 locals_query: String::new(),
             }),
