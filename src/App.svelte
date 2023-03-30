@@ -238,36 +238,37 @@
                     rel="noreferrer">rush playground</a
                 >
                 allows everyone to use the
-                <a
-                    class="highlight"
-                    href="https://github.com/rush-rs/rush"
-                    target="_blank"
-                    rel="noreferrer">rush</a
-                > programming language regardless of whether they have installed rush or not.
+                <a class="highlight" href="https://rush-lang.de" target="_blank" rel="noreferrer"
+                    >rush</a
+                > programming language without the need for an installation.
             </p>
 
             <p>
-                All changes made to the current script are saved locally, meaning on your device.
-                Therefore, you can reload the page while working without hesitation. If you do want
-                to erase your current changes, use the <code class="highlight">load</code> button in
-                the top right corner.
+                All changes made to the current script are saved locally. Therefore, you can reload
+                the page without hesitation. If you do want to erase your current changes, use the <code
+                    class="highlight">load</code
+                > button in the top right corner.
             </p>
 
             <p>
                 This button can also be used to switch to other code templates. For this, the
-                desired template is to be selected using the drop down menu. After the selection has
-                been made, the <code class="highlight">load</code> button is to be pressed.
+                desired template is to be selected using the drop down menu at the top. After the
+                selection has been made, the <code class="highlight">load</code> button is to be pressed.
             </p>
 
             <p>
-                To run the current code using the <a
-                    class="highlight"
-                    href="https://github.com/rush-rs/rush/tree/main/crates/rush-interpreter-vm"
-                    target="_blank"
-                    rel="noreferrer">VM</a
-                >, use the <i class="material-icons icon">play_arrow</i> button in the top right
-                corder. If the script does not stop when expected, it can be terminated using the
+                To run the current code using a rush interpreter, use the <i
+                    class="material-icons icon">play_arrow</i
+                >
+                button in the top right corder. If the script does not stop when expected, it can be
+                terminated using the
                 <i class="material-icons icon">cancel</i> button.
+            </p>
+
+            <p>
+                There are multiple backends for rush. While the first two backends can execute rush
+                code, the remaining backends can only compile rush. If a compiler backend is used,
+                the output of the current script can be seen on the right.
             </p>
 
             <h4>Keybindings</h4>
@@ -276,10 +277,10 @@
                     <code class="highlight">CTRL + S</code>: force save the current code
                 </li>
                 <li>
-                    <code class="highlight">F8</code>: run the current code
+                    <code class="highlight">F8</code>: run / compile the current code
                 </li>
                 <li>
-                    <code class="highlight">F9</code>: terminate current execution
+                    <code class="highlight">F9</code>: terminate current interpreter
                 </li>
             </ul>
         </Content>
