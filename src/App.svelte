@@ -3,6 +3,8 @@
     import Button, { Label } from '@smui/button'
     import Dialog, { Title, Content, Actions } from '@smui/dialog'
     import Select, { Option } from '@smui/select'
+    import Checkbox from '@smui/checkbox'
+    import FormField from '@smui/form-field'
     import { onMount } from 'svelte'
 
     import Editor from './Editor.svelte'
@@ -39,6 +41,7 @@
     let currentBackend = Object.keys(backends)[0]
 
     let compileRes: CompileResult = undefined
+    let showDiagnostics = true
 
     let code = ''
     $: if (loadedInitially) saveCode(code)
@@ -336,6 +339,11 @@
                         <IconButton class="material-icons" on:click={cancel} disabled={!running}
                             >cancel</IconButton
                         >
+                    {:else}
+                        <FormField>
+                            <Checkbox bind:checked={showDiagnostics} />
+                            <span slot="label">Show Diagnostics</span>
+                        </FormField>
                     {/if}
                 </div>
             </div>
@@ -361,11 +369,9 @@
                         {@html runRes.diagnostics}
                     {/if}
                 {:else if compileRes}
-                    {#if compileRes.diagnostics}
+                    {#if compileRes.diagnostics && ( showDiagnostics || compileRes.output === undefined)}
                         {@html compileRes.diagnostics}
-                        <br />
-                        <br />
-                        <br />
+                        <div class="main__output__terminal__sep" />
                     {/if}
                     {#if compileRes.error}
                         Compilation failed:
@@ -473,6 +479,12 @@
                 font-family: 'Jetbrains Mono NL', monospace;
                 padding: 1rem 1.6rem;
                 overflow: auto;
+
+                &__sep {
+                    height: 0.2rem;
+                    background-color: #424242;
+                    margin: 1.5rem 0;
+                }
             }
         }
     }
