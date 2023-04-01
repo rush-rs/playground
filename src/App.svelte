@@ -31,6 +31,7 @@
         vmInterpreter: 'VM interpreter',
         tree: 'tree interpreter',
         vmCompiler: 'VM compiler',
+        wasmRun: 'Wasm',
         wasmText: 'Wasm text',
         wasmBinary: 'Wasm binary',
         riscv: 'RISC-V',
@@ -63,7 +64,7 @@
         rushWorker = makeWorker(
             code,
             currentBackend,
-            !['vmInterpreter', 'tree'].includes(currentBackend),
+            !['vmInterpreter', 'tree', 'wasmRun'].includes(currentBackend),
         )
     }
 
@@ -71,7 +72,7 @@
         running = true
         if (!loadedInitially) return
         running = false
-        if (!['vmInterpreter', 'tree'].includes(currentBackend)) run()
+        if (!['vmInterpreter', 'tree', 'wasmRun'].includes(currentBackend)) run()
     }
 
     function cancel() {
@@ -332,7 +333,7 @@
                             <Option value={backend}>{backends[backend]}</Option>
                         {/each}
                     </Select>
-                    {#if ['vmInterpreter', 'tree'].includes(currentBackend)}
+                    {#if ['vmInterpreter', 'tree', 'wasmRun'].includes(currentBackend)}
                         <IconButton class="material-icons" on:click={run} disabled={running}
                             >play_arrow</IconButton
                         >
