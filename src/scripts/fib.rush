@@ -1,14 +1,14 @@
 // Calculates a digit of the Fibonacci sequence.
 fn main() {
     // fib(10) = 55
-    exit(fib_rec(10))
+    exit(fib(10));
 }
 
-fn fib_rec(n: int) -> int {
+fn fib(n: int) -> int {
     if n < 2 {
         n
     } else {
-        fib_rec(n - 2) + fib_rec(n - 1)
+        fib(n - 2) + fib(n - 1)
     }
 }
 

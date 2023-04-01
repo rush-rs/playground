@@ -8,5 +8,5 @@ fn main() {
     }
 
     let FAC = 10000000f;
-    exit((res * FAC) as int)
+    exit((res * FAC) as int);
 }

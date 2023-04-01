@@ -1,5 +1,5 @@
 fn main() {
-    exit(pow(2, 4)) // 2 ** 4 = 16
+    exit(pow(2, 4)); // 2 ** 4 = 16
 }
 
 fn pow(mut base: int, mut exp: int) -> int {

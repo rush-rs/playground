@@ -10,5 +10,5 @@ fn main() {
   }
 
   let result = (e * 1000000000000000f) as int;
-  exit(result)
+  exit(result);
 }
