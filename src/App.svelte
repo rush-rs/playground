@@ -28,15 +28,15 @@
     }
 
     const backends = {
-        vmInterpreter: 'VM interpreter',
-        tree: 'tree interpreter',
-        vmCompiler: 'VM compiler',
-        wasmRun: 'Wasm',
-        wasmText: 'Wasm text',
-        wasmBinary: 'Wasm binary',
-        riscv: 'RISC-V',
-        x64: 'x86_64',
-        transpiler: 'C transpiler',
+        tree: 'run tree-walking',
+        vmInterpreter: 'run VM',
+        wasmRun: 'run Wasm',
+        vmCompiler: 'compile VM',
+        wasmBinary: 'compile Wasm binary',
+        wasmText: 'compile Wasm text',
+        riscv: 'compile RISC-V',
+        x64: 'compile x86_64',
+        transpiler: 'transpile C',
     }
 
     let currentBackend = Object.keys(backends)[0]
