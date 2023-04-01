@@ -1,7 +1,6 @@
 use std::{
     error::Error,
     fmt::{self, Display, Formatter},
-    sync::Arc,
 };
 
 use crate::print_diagnostics;
@@ -9,7 +8,7 @@ use rush_analyzer::Diagnostic;
 use rush_interpreter_vm::{RuntimeError, RuntimeErrorKind};
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
-use wasmer::{imports, Function, Instance, InstantiationError, Module, Store, TypedFunction};
+use wasmer::{imports, Function, Instance, InstantiationError, Module, Store};
 
 #[derive(Serialize)]
 pub enum Backend {
