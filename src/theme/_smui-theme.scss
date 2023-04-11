@@ -5,7 +5,7 @@ $text-color: #fff;
 @use '@material/theme/index' as theme with (
     $primary: colors.$purple-200,
     $surface: #121212,
-    $background: #121212,
+    $background: #222225,
     $on-surface: color.change($text-color, $alpha: 0.87),
     $error: #cf6679
 );

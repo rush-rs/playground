@@ -397,7 +397,6 @@
         width: 100%;
         height: 100%;
         margin: 0;
-        overflow: hidden;
     }
 
     .highlight {
@@ -426,18 +425,20 @@
 
         @include mobile {
             flex-direction: column;
+            height: auto;
         }
 
         &__editor {
             width: calc(75% - 10px);
+            overflow-x: auto;
 
             @include mobile {
-                height: 75%;
-                width: 100%;
+                width: 100% !important;
             }
         }
 
         &__resizer {
+            flex-shrink: 0;
             width: 4px;
             cursor: e-resize;
 
@@ -447,18 +448,10 @@
         }
 
         &__output {
-            @include widescreen {
-                width: 27vw;
-            }
-
             flex: 1 0 0%;
             background-color: #222225;
             display: flex;
             flex-direction: column;
-
-            @include mobile {
-                height: 25%;
-            }
 
             &__nav {
                 background-color: #323237;
