@@ -85,7 +85,7 @@ fn types() -> int {
         + bool as int
         + char as int
 }
-`,nn=`// Calculates a digit of the Fibonacci sequence.
+`,nn=`// Calculates a number in the Fibonacci sequence.
 fn main() {
     // fib(10) = 55
     exit(fib(10));
@@ -98,7 +98,6 @@ fn fib(n: int) -> int {
         fib(n - 2) + fib(n - 1)
     }
 }
-
 `,on=`fn main() {
     exit(pow(2, 4)); // 2 ** 4 = 16
 }
