@@ -1,4 +1,4 @@
-// Calculates a digit of the Fibonacci sequence.
+// Calculates a number in the Fibonacci sequence.
 fn main() {
     // fib(10) = 55
     exit(fib(10));
@@ -11,4 +11,3 @@ fn fib(n: int) -> int {
         fib(n - 2) + fib(n - 1)
     }
 }
-
