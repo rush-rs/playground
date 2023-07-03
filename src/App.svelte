@@ -121,7 +121,11 @@
         loadedScript = currentScript
 
         let storageScript = window.localStorage.getItem('rush-playground-script')
-        if (storageScript === null) {
+        if (storageScript === null || storageScript === undefined || storageScript === "undefined") {
+            if (currentScript === null || currentScript === undefined) {
+                currentScript = Object.keys(templates)[0]
+                console.log(`This page is visited for the first time, using default script: ${currentScript}`)
+            }
             saveScript(currentScript)
         } else {
             loadedScript = storageScript
