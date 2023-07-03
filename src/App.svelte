@@ -274,7 +274,7 @@
             </p>
 
             <p>
-                There are multiple backends for rush. While the first two backends can execute rush
+                There are multiple backends for rush. While the first three backends can execute rush
                 code, the remaining backends can only compile rush. If a compiler backend is used,
                 the output of the current script can be seen on the right.
             </p>
