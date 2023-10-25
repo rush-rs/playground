@@ -120,7 +120,10 @@ pub fn compile(code: &str, backend: String) -> String {
             [],
         ),
         Backend::X64 => highlight(
-            rush_compiler_x86_64::Compiler::new().compile(program),
+            rush_compiler_x86_64::Compiler::new().compile(
+                program,
+                rush_compiler_x86_64::CommentConfig::Emit { line_width: 45 },
+            ),
             "s".to_string(),
             [],
         ),

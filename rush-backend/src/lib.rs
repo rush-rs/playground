@@ -32,7 +32,7 @@ fn display_err(err: &Diagnostic) -> String {
     // take special action if the source code is empty or there is no useful span
     if err.source.is_empty() || err.span.is_empty() {
         return format!(
-            "<b style='{color};'{lvl}</b> in {path} <br> {msg}{notes}",
+            "<b style='color: {color};'>{lvl}</b> in {path} <br> {msg}{notes}",
             color = color,
             lvl = err.level,
             path = err.span.start.path,
