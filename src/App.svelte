@@ -264,7 +264,7 @@
                 To run the current code using a rush interpreter, use the <i
                     class="material-icons icon">play_arrow</i
                 >
-                button in the top right corder. If the script does not stop when expected, it can be
+                button in the top right corner. If the script does not stop when expected, it can be
                 terminated using the
                 <i class="material-icons icon">cancel</i> button.
             </p>
